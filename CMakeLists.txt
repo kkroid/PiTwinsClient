@@ -9,10 +9,13 @@ ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
 ENDIF()
     MESSAGE(STATUS "current platform: Darwin")
 
-find_package(cppzmq)
+#add_definitions(-DUSE_MJPEG=1)
+
+find_package(Threads)
 find_package(OpenCV REQUIRED)
 
 set(CMAKE_CXX_STANDARD 14)
+include_directories(ThirdParty/zmq/include)
 include_directories(ThirdParty/spdlog)
 include_directories(ThirdParty/cptl)
 include_directories(ThirdParty/json)
@@ -22,8 +25,12 @@ add_executable(PiTwinsClient
         main.cpp
         public/Snowflak.h)
 
+add_library(zmq STATIC IMPORTED)
+set_target_properties(zmq PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/ThirdParty/zmq/mac/libzmq.a)
+
 target_link_libraries(
         PiTwinsClient
         ${OpenCV_LIBS}
-        cppzmq
+        ${CMAKE_THREAD_LIBS_INIT}
+        zmq
 )
