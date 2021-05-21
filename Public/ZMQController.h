@@ -75,7 +75,7 @@ public:
         videoSubscriber->connect(subAddr);
         videoSubscriber->set(sockopt::subscribe, "");
 #endif
-        cmdPusher = new socket_t(ctx, socket_type::push);
+        cmdPusher = new socket_t(ctx, socket_type::pub);
         cmdPusher->connect(pushAddr);
         spdlog::info("ZMQController connected");
         while (true) {
@@ -107,11 +107,17 @@ public:
 #endif
             int key = waitKey(1);
             if (key >= 0) {
-                threadPool->push([this, key](int id) {
-                    string cmd = format(BASE_CMD, nextId(), key);
-                    spdlog::info("ZMQController: send cmd: {}", cmd);
-                    push(cmd);
-                });
+                if (key == 113) {
+                    destroyAllWindows();
+                    matFrame.release();
+                    exit(0);
+                } else {
+                    threadPool->push([this, key](int id) {
+                        string cmd = format(BASE_CMD, nextId(), key);
+                        spdlog::info("ZMQController: send cmd: {}", cmd);
+                        push(cmd);
+                    });
+                }
             }
             imshow("PiTwinsClient", matFrame);
             matFrame.release();

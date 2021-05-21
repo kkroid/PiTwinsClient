@@ -2,12 +2,18 @@ cmake_minimum_required(VERSION 3.15)
 project(PiTwinsClient)
 MESSAGE(STATUS "Pitwins:operation system is ${CMAKE_SYSTEM}")
 
+add_library(zmq STATIC IMPORTED)
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
     MESSAGE(STATUS "current platform: Linux ")
 ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
     MESSAGE(STATUS "current platform: Windows")
-ENDIF()
+ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     MESSAGE(STATUS "current platform: Darwin")
+    set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/OpenCV/mac)
+
+    set_target_properties(zmq PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/ThirdParty/zmq/mac/libzmq.a)
+
+ENDIF()
 
 #add_definitions(-DUSE_MJPEG=1)
 
@@ -19,14 +25,11 @@ include_directories(ThirdParty/zmq/include)
 include_directories(ThirdParty/spdlog)
 include_directories(ThirdParty/cptl)
 include_directories(ThirdParty/json)
-include_directories(public)
+include_directories(Public)
 
 add_executable(PiTwinsClient
         main.cpp
         public/Snowflak.h)
-
-add_library(zmq STATIC IMPORTED)
-set_target_properties(zmq PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/ThirdParty/zmq/mac/libzmq.a)
 
 target_link_libraries(
         PiTwinsClient
