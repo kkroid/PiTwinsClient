@@ -24,13 +24,14 @@ private:
     socket_t *videoSubscriber{};
     socket_t *cmdPusher{};
     ctpl::thread_pool *threadPool;
+    int type = 1;
 #ifdef USE_MJPEG
     VideoCapture *videoCapture{};
 #endif
     vector<int> params;
 public:
     Snowflake snowflake;
-    const string BASE_CMD = R"({"tid":%lu,"type":1,"payload":{"key":%d}})";
+    const string BASE_CMD = R"({"tid":%lu,"type":%d,"payload":{"key":%d,"value":%d}})";
 
     ZMQController() {
         cout << "ZMQController created" << endl;
@@ -106,17 +107,30 @@ public:
             Mat matFrame = imdecode(data, IMREAD_COLOR);
 #endif
             int key = waitKey(1);
+            // esc:27, 1: 49, 2: 50
             if (key >= 0) {
-                if (key == 113) {
+                if (key == 27) {
                     destroyAllWindows();
                     matFrame.release();
                     exit(0);
                 } else {
-                    threadPool->push([this, key](int id) {
-                        string cmd = format(BASE_CMD, nextId(), key);
-                        spdlog::info("ZMQController: send cmd: {}", cmd);
-                        push(cmd);
-                    });
+                    if (key == 49) {
+                        type = 1;
+                    } else if (key == 50) {
+                        type = 2;
+                    } else {
+                        threadPool->push([this, key](int id) {
+                            int sendKey = 1;
+                            if (key == 113) {
+                                sendKey = 8;
+                            } else {
+                                sendKey = key + 1;
+                            }
+                            string cmd = format(BASE_CMD, nextId(), type, sendKey, 255);
+                            spdlog::info("ZMQController: send cmd: {}", cmd);
+                            push(cmd);
+                        });
+                    }
                 }
             }
             imshow("PiTwinsClient", matFrame);
