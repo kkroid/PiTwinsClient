@@ -31,9 +31,12 @@ include_directories(ThirdParty/libevent/include)
 include_directories(ThirdParty/evpp/public)
 include_directories(Public)
 
-add_subdirectory(ThirdParty/evpp)
+add_subdirectory(ThirdParty/PiRPC)
+
+#file(GLOB private_src ${CMAKE_SOURCE_DIR}/Private/*.cpp)
 
 add_executable(PiTwinsClient
+#        ${private_src}
         main.cpp)
 
 target_link_libraries(
@@ -41,5 +44,5 @@ target_link_libraries(
         ${OpenCV_LIBS}
         ${CMAKE_THREAD_LIBS_INIT}
         zmq
-        evpp
+        PiRPC
 )
