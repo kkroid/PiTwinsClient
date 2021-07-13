@@ -9,6 +9,7 @@
 #include <tcp_server.h>
 #include <buffer.h>
 #include <event_loop.h>
+#include <tcp_conn.h>
 
 
 class Server {

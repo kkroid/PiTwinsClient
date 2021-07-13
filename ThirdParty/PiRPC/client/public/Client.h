@@ -9,6 +9,7 @@
 #include <tcp_client.h>
 #include <buffer.h>
 #include <event_loop.h>
+#include <tcp_conn.h>
 
 class Client {
 public:
