@@ -1,6 +1,6 @@
 #include "inner_pre.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "libevent.h"
 #include "event_watcher.h"
@@ -150,11 +150,11 @@ void PipeEventWatcher::DoClose() {
 }
 
 void PipeEventWatcher::HandlerFn(evpp_socket_t fd, short /*which*/, void* v) {
-    LOG_INFO << "PipeEventWatcher::HandlerFn fd=" << fd << " v=" << v;
-    PipeEventWatcher* e = (PipeEventWatcher*)v;
+    LOG_TRACE << "PipeEventWatcher::HandlerFn fd=" << fd << " v=" << v;
+    auto* e = (PipeEventWatcher*)v;
 #ifdef H_BENCHMARK_TESTING
     // Every time we only read 1 byte for testing the IO event performance.
-    // We use it in the benchmark test program 
+    // We use it in the benchmark test program
     //  1. evpp/benchmark/ioevent/evpp/
     //  1. evpp/benchmark/ioevent/fd_channel_vs_pipe_event_watcher/
     char buf[1];
@@ -215,7 +215,7 @@ bool TimerEventWatcher::DoInit() {
 }
 
 void TimerEventWatcher::HandlerFn(evpp_socket_t /*fd*/, short /*which*/, void* v) {
-    TimerEventWatcher* h = (TimerEventWatcher*)v;
+    auto* h = (TimerEventWatcher*)v;
     h->handler_();
 }
 
@@ -248,7 +248,7 @@ bool SignalEventWatcher::DoInit() {
 }
 
 void SignalEventWatcher::HandlerFn(signal_number_t /*sn*/, short /*which*/, void* v) {
-    SignalEventWatcher* h = (SignalEventWatcher*)v;
+    auto* h = (SignalEventWatcher*)v;
     h->handler_();
 }
 
