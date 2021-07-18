@@ -39,14 +39,16 @@ int main() {
                 for (int i = 0, n = buffer->length(); i < n; i++) {
                     data.push_back(ucharData[i]);
                 }
-                cv::Mat matFrame = cv::imdecode(data, cv::IMREAD_COLOR);
+                cv::Mat matFrame = cv::imdecode(data, cv::IMREAD_UNCHANGED);
                 if (matFrame.empty() || matFrame.rows == 0) {
+                    spdlog::info("Invalid frame:{}, {}, {}, ignored", buffer->capacity(),
+                                 matFrame.rows, matFrame.cols);
                     matFrame.release();
                     buffer->Reset();
-                    spdlog::info("Invalid frame:{}, {}, {}, ignored", buffer->length(),
-                                 matFrame.rows, matFrame.cols);
                     return;
                 }
+                spdlog::info("Valid frame:{}, {}, {}", buffer->capacity(),
+                             matFrame.rows, matFrame.cols);
                 // spdlog::info("Client Received A Frame:{}, {}, {}", buffer->length(),
                 //              matFrame.rows, matFrame.cols);
                 cv::imshow("PiTwinsClient", matFrame);
