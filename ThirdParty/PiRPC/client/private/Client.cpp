@@ -3,20 +3,21 @@
 //
 #include "Client.h"
 
-void Client::init(const evpp::ConnectionCallback &ccb, const evpp::MessageCallback &mcb) {
+void Client::init(const char *address, char *name, const evpp::ConnectionCallback &ccb, const evpp::MessageCallback &mcb) {
+    addr = address;
     loop = new evpp::EventLoop();
-    client = new evpp::TCPClient(loop, addr, "PiClient");
+    client = new evpp::TCPClient(loop, addr, name);
     setConnectionCallback(ccb);
     setMessageCallback(mcb);
 }
 
 void Client::setConnectionCallback(const evpp::ConnectionCallback &ccb) {
     if (client) {
-        client->SetConnectionCallback([ccb](const evpp::TCPConnPtr &connPtr) {
+        client->SetConnectionCallback([this, ccb](const evpp::TCPConnPtr &connPtr) {
             if (connPtr->IsConnected()) {
-                spdlog::info("connected to {}", connPtr->remote_addr());
+                spdlog::info("{} connected to {}", client->name(), connPtr->remote_addr());
             } else if (connPtr->IsDisconnected()) {
-                spdlog::info("disconnected to {}", connPtr->remote_addr());
+                spdlog::info("{} disconnected to {}", client->name(), connPtr->remote_addr());
             }
             if (ccb) {
                 ccb(connPtr);
@@ -42,5 +43,9 @@ void Client::connect() {
 }
 
 void Client::disconnect() {
-    client->Disconnect();
+    if (client) {
+        client->conn()->Close();
+        client->Disconnect();
+        loop->Stop();
+    }
 }

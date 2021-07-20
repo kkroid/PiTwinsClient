@@ -11,12 +11,12 @@
 #include <event_loop.h>
 #include <tcp_conn.h>
 
-#define ADDR_CMD_SERVER "127.0.0.1:15556"
-#define ADDR_VIDEO_SERVER "127.0.0.1:15555"
+#define DEFAULT_ADDR_CMD_SERVER "127.0.0.1:15556"
+#define DEFAULT_ADDR_VIDEO_SERVER "127.0.0.1:15555"
 
 class Client {
 private:
-    std::string addr = ADDR_CMD_SERVER;
+    std::string addr = DEFAULT_ADDR_CMD_SERVER;
     evpp::TCPClient *client = nullptr;
     evpp::EventLoop *loop = nullptr;
 public:
@@ -29,15 +29,13 @@ public:
         delete client;
     }
 
-    static Client &getVideoClient(const char *_addr = nullptr) {
+    static Client &getVideoClient() {
         static Client videoClient;
-        videoClient.addr = _addr == nullptr ? ADDR_VIDEO_SERVER : _addr;
         return videoClient;
     }
 
-    static Client &getCMDClient(const char *_addr = nullptr) {
+    static Client &getCMDClient() {
         static Client cmdClient;
-        cmdClient.addr = _addr == nullptr ? ADDR_CMD_SERVER : _addr;
         return cmdClient;
     }
 
@@ -47,7 +45,7 @@ public:
     // 拒绝拷贝赋值
     Client &operator=(const Client &rhs) = delete;
 
-    void init(const evpp::ConnectionCallback &ccb = nullptr,
+    void init(const char *address, char *name, const evpp::ConnectionCallback &ccb = nullptr,
               const evpp::MessageCallback &mcb = nullptr);
 
     void setConnectionCallback(const evpp::ConnectionCallback &ccb = nullptr);
