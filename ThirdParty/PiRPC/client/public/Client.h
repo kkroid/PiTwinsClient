@@ -17,6 +17,7 @@
 class Client {
 private:
     std::string addr = DEFAULT_ADDR_CMD_SERVER;
+    std::string name = "Client";
     evpp::TCPClient *client = nullptr;
     evpp::EventLoop *loop = nullptr;
 public:
@@ -34,9 +35,9 @@ public:
         return videoClient;
     }
 
-    static Client &getCMDClient() {
-        static Client cmdClient;
-        return cmdClient;
+    static Client &getMsgClient() {
+        static Client msgClient;
+        return msgClient;
     }
 
     // 拒绝拷贝构造
@@ -45,7 +46,7 @@ public:
     // 拒绝拷贝赋值
     Client &operator=(const Client &rhs) = delete;
 
-    void init(const char *address, char *name, const evpp::ConnectionCallback &ccb = nullptr,
+    void init(std::string address, std::string clientName, const evpp::ConnectionCallback &ccb = nullptr,
               const evpp::MessageCallback &mcb = nullptr);
 
     void setConnectionCallback(const evpp::ConnectionCallback &ccb = nullptr);
@@ -55,6 +56,19 @@ public:
     void connect();
 
     void disconnect();
+
+    void Send(const char* s) {
+        Send(s, strlen(s));
+    }
+    void Send(const void* d, size_t dlen) {
+        if (client && client->conn()->IsConnected()) {
+            client->conn()->Send(d, dlen);
+        }
+    }
+
+    void Send(const std::string& msg) {
+        Send(msg.data(), msg.length());
+    }
 };
 
 

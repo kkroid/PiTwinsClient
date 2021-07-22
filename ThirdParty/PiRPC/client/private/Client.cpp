@@ -3,8 +3,14 @@
 //
 #include "Client.h"
 
-void Client::init(const char *address, char *name, const evpp::ConnectionCallback &ccb, const evpp::MessageCallback &mcb) {
-    addr = address;
+#include <utility>
+
+void Client::init(std::string address,
+                  std::string clientName,
+                  const evpp::ConnectionCallback &ccb,
+                  const evpp::MessageCallback &mcb) {
+    addr = std::move(address);
+    name = std::move(clientName);
     loop = new evpp::EventLoop();
     client = new evpp::TCPClient(loop, addr, name);
     setConnectionCallback(ccb);
@@ -14,11 +20,7 @@ void Client::init(const char *address, char *name, const evpp::ConnectionCallbac
 void Client::setConnectionCallback(const evpp::ConnectionCallback &ccb) {
     if (client) {
         client->SetConnectionCallback([this, ccb](const evpp::TCPConnPtr &connPtr) {
-            if (connPtr->IsConnected()) {
-                spdlog::info("{} connected to {}", client->name(), connPtr->remote_addr());
-            } else if (connPtr->IsDisconnected()) {
-                spdlog::info("{} disconnected to {}", client->name(), connPtr->remote_addr());
-            }
+            spdlog::info("{} connection status:{}", client->name(), connPtr->status());
             if (ccb) {
                 ccb(connPtr);
             }

@@ -25,21 +25,21 @@ include_directories(ThirdParty/cptl)
 include_directories(ThirdParty/json)
 include_directories(ThirdParty/OpenCV/include)
 include_directories(ThirdParty/PiRPC/evpp/public)
+include_directories(ThirdParty/PiRPC/common/public)
 include_directories(ThirdParty/PiRPC/server/public)
 include_directories(ThirdParty/PiRPC/client/public)
 include_directories(Public)
 
 add_subdirectory(ThirdParty/PiRPC)
 
-add_executable(PiTwinsClientQT
-  main.cpp
-  mainwindow.cpp
-  mainwindow.h
-  mainwindow.ui
-)
+add_executable(PiTwinsClient
+        main.cpp
+        mainwindow.cpp
+        mainwindow.ui
+        )
 
-target_link_libraries(PiTwinsClientQT PRIVATE
-    Qt5::Widgets
-    OpenCV
-    PiRPC
-    )
+target_link_libraries(PiTwinsClient PRIVATE
+        Qt5::Widgets
+        OpenCV
+        PiRPC
+        )

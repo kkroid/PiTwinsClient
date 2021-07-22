@@ -7,16 +7,18 @@
 
 void Server::run() {
     if (nullptr != server) {
+        spdlog::info("{} is running", name);
         server->Init();
         server->Start();
         loop->Run();
     }
 }
 
+// FIXME 此处会crash
 void Server::release() {
-    spdlog::info("call {} stop", name);
+    spdlog::info("[{}]:{} released", name);
     server->Stop([this]() {
-        spdlog::info("{} stopped", name);
+        spdlog::info("[{}]:{} stopped", name);
     });
     loop->Stop();
     delete loop;
@@ -29,16 +31,17 @@ void Server::setConnectionCallback(const evpp::ConnectionCallback &ccb) {
     if (nullptr != server) {
         server->SetConnectionCallback([this, ccb](const evpp::TCPConnPtr &connPtr) {
             if (connPtr->IsConnected()) {
-                clientCount++;
-                spdlog::info("got a connection:{}, count:{}", connPtr->remote_addr(), clientCount);
-                // if (tcpConnPtr == nullptr) {
-                    tcpConnPtr = connPtr;
-                    spdlog::info("save a connection:{}", connPtr->remote_addr());
-                // }
+                spdlog::info("[{}]:Client {} Connected", name, connPtr->remote_addr());
+                // TODO 这里是新连接覆盖旧连接，将来改成支持多连接
+                if (tcpConnPtr) {
+                    spdlog::info("[{}]:Close previous connection {}", name, tcpConnPtr->remote_addr());
+                    tcpConnPtr->Close();
+                    tcpConnPtr = nullptr;
+                }
+                tcpConnPtr = connPtr;
             } else if (connPtr->IsDisconnected()) {
-                spdlog::info("delete a connection:{}", connPtr->remote_addr());
+                spdlog::info("[{}]:Client {} Disconnected", name, connPtr->remote_addr());
                 tcpConnPtr = nullptr;
-                clientCount--;
             }
             if (ccb) {
                 ccb(connPtr);
@@ -50,6 +53,7 @@ void Server::setConnectionCallback(const evpp::ConnectionCallback &ccb) {
 void Server::setMessageCallback(const evpp::MessageCallback &mcb) {
     if (nullptr != server) {
         server->SetMessageCallback([this, mcb](const evpp::TCPConnPtr &connPtr, evpp::Buffer *buffer) {
+            MessageReceiver::getInstance().onNewMsgReceived(connPtr, buffer);
             if (mcb) {
                 mcb(connPtr, buffer);
             }

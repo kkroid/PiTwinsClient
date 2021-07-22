@@ -5,6 +5,7 @@
 #include "ctpl_stl.h"
 #include <QKeyEvent>
 #include <QCloseEvent>
+#include "MessageGenerator.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -15,16 +16,29 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
 
 private:
     Ui::MainWindow *ui;
     ctpl::thread_pool *threadPool;
 private slots:
-    void on_connect_clicked();
-    void keyPressEvent(QKeyEvent *keyEvent);
-    void closeEvent(QCloseEvent *event);
+    void on_connectBtn_clicked();
+    void keyPressEvent(QKeyEvent *keyEvent) override;
+    void closeEvent(QCloseEvent *event) override;
+
+    /**
+     * @param status disconnected = 0, connecting = 1, connected = 2, disconnecting = 3
+     */
+    void onMsgServerConnectionChanged(int status);
+    /**
+     * @param status disconnected = 0, connecting = 1, connected = 2, disconnecting = 3
+     */
+    void onVideoServerConnectionChanged(int status);
+
+    void onMsgReceived(const std::string& cmd);
+
+    void onVideoFrameReceived(const std::vector<unsigned char>& frameData);
 
 };
 #endif // MAINWINDOW_H
