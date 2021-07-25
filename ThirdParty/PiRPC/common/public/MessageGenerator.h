@@ -17,34 +17,36 @@
 #define BASE_SERVO_MOTOR_MSG_FORMAT R"({"servo":%d,"delta":%d})"
 #define BASE_CAMERA_MSG_FORMAT R"({"cmd":%d,"param":%d})"
 
-class MessageGenerator {
+namespace PiRPC {
+    class MessageGenerator {
 
-public:
-    template<typename ... Args>
-    static std::string format(const std::string &format, Args ... args) {
-        int size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
-        if (size <= 0) { throw std::runtime_error("Error during formatting."); }
-        std::unique_ptr<char[]> buf(new char[size]);
-        snprintf(buf.get(), size, format.c_str(), args ...);
-        return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
-    }
+    public:
+        template<typename ... Args>
+        static std::string format(const std::string &format, Args ... args) {
+            int size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+            if (size <= 0) { throw std::runtime_error("Error during formatting."); }
+            std::unique_ptr<char[]> buf(new char[size]);
+            snprintf(buf.get(), size, format.c_str(), args ...);
+            return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+        }
 
-    static std::string gen(int type, const std::string &payload) {
-        static Snowflake snowflake;
-        return format(BASE_MSG_FORMAT, snowflake.nextId(), type, payload.c_str());
-    }
+        static std::string gen(int type, const std::string &payload) {
+            static Snowflake snowflake;
+            return format(BASE_MSG_FORMAT, snowflake.nextId(), type, payload.c_str());
+        }
 
-    static std::string genCamera(int cmd, int param) {
-        return gen(TYPE_CAMERA_CTRL, format(BASE_CAMERA_MSG_FORMAT, cmd, param));
-    }
+        static std::string genCamera(int cmd, int param) {
+            return gen(TYPE_CAMERA_CTRL, format(BASE_CAMERA_MSG_FORMAT, cmd, param));
+        }
 
-    static std::string genServo(int servo, int delta) {
-        return gen(TYPE_SERVO_CTRL, format(BASE_SERVO_MOTOR_MSG_FORMAT, servo, delta));
-    }
+        static std::string genServo(int servo, int delta) {
+            return gen(TYPE_SERVO_CTRL, format(BASE_SERVO_MOTOR_MSG_FORMAT, servo, delta));
+        }
 
-    static std::string genMoto(int key) {
-        return gen(TYPE_MOTOR_CTRL, format(BASE_SERVO_MOTOR_MSG_FORMAT, key));
-    }
-};
+        static std::string genMoto(int key) {
+            return gen(TYPE_MOTOR_CTRL, format(BASE_SERVO_MOTOR_MSG_FORMAT, key));
+        }
+    };
+}
 
 #endif //PITWINS_MESSAGEGENERATOR_H

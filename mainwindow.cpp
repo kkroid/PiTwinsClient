@@ -6,6 +6,7 @@
 #include "json.hpp"
 
 using namespace std;
+using namespace PiRPC;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -35,7 +36,7 @@ void MainWindow::on_connectBtn_clicked() {
         Client::getMsgClient().init(msgServer, "msg server", [this](const evpp::TCPConnPtr &connPtr) {
             onMsgServerConnectionChanged(connPtr->status());
         });
-        Client::getMsgClient().setMessageCallback([this](const char *data, size_t size) {
+        Client::getMsgClient().setOnNewMsgReceivedCallback([this](const char *data, size_t size) {
             onMsgReceived(std::string(data, size));
         });
         Client::getMsgClient().connect();
@@ -123,7 +124,7 @@ void MainWindow::onMsgReceived(const std::string &cmd) {
             Client::getVideoClient().init(videoServer, "video server", [this](const evpp::TCPConnPtr &connPtr) {
                 onVideoServerConnectionChanged(connPtr->status());
             });
-            Client::getVideoClient().setMessageCallback([this](const char *data, size_t size) {
+            Client::getVideoClient().setOnNewMsgReceivedCallback([this](const char *data, size_t size) {
                 vector<unsigned char> frameData(data, data + size);
                 onVideoFrameReceived(frameData);
             });
