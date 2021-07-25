@@ -6,14 +6,17 @@
 #include <utility>
 
 namespace PiRPC {
-    void Client::init(std::string address,
-                      std::string clientName,
-                      const evpp::ConnectionCallback &ccb) {
+    void Client::init(std::string address, std::string clientName) {
         addr = std::move(address);
         name = std::move(clientName);
         loop = new evpp::EventLoop();
         client = new evpp::TCPClient(loop, addr, name);
-        setConnectionCallback(ccb);
+        client->SetConnectionCallback([this](const evpp::TCPConnPtr &connPtr) {
+            spdlog::info("{} connection status:{}", client->name(), connPtr->status());
+            if (_onConnectionChanged) {
+                _onConnectionChanged(connPtr->status());
+            }
+        });
         client->SetMessageCallback([this](const evpp::TCPConnPtr &connPtr, evpp::Buffer *buffer) {
             // 拆包分包处理
             int32_t realDataSize = buffer->PeekInt32();
@@ -54,17 +57,6 @@ namespace PiRPC {
                 }
             }
         });
-    }
-
-    void Client::setConnectionCallback(const evpp::ConnectionCallback &ccb) {
-        if (client) {
-            client->SetConnectionCallback([this, ccb](const evpp::TCPConnPtr &connPtr) {
-                spdlog::info("{} connection status:{}", client->name(), connPtr->status());
-                if (ccb) {
-                    ccb(connPtr);
-                }
-            });
-        }
     }
 
     void Client::connect() {

@@ -8,6 +8,14 @@
 using namespace std;
 using namespace PiRPC;
 
+#define UP 16777235
+#define DOWN 16777237
+#define LEFT 16777234
+#define RIGHT 16777236
+#define W 87
+#define S 83
+#define A 65
+#define D 68
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -33,8 +41,9 @@ void MainWindow::on_connectBtn_clicked() {
 
     threadPool->push([this, msgServer](int id) {
         spdlog::info("start to connect msg server");
-        Client::getMsgClient().init(msgServer, "msg server", [this](const evpp::TCPConnPtr &connPtr) {
-            onMsgServerConnectionChanged(connPtr->status());
+        Client::getMsgClient().init(msgServer, "msg server");
+        Client::getMsgClient().setOnConnectionChangedCallback([this](int status) {
+            onMsgServerConnectionChanged(status);
         });
         Client::getMsgClient().setOnNewMsgReceivedCallback([this](const char *data, size_t size) {
             onMsgReceived(std::string(data, size));
@@ -42,15 +51,6 @@ void MainWindow::on_connectBtn_clicked() {
         Client::getMsgClient().connect();
     });
 }
-
-#define UP 16777235
-#define DOWN 16777237
-#define LEFT 16777234
-#define RIGHT 16777236
-#define W 87
-#define S 83
-#define A 65
-#define D 68
 
 void MainWindow::keyPressEvent(QKeyEvent *keyEvent) {
     switch (keyEvent->key()) {
@@ -94,7 +94,7 @@ void MainWindow::onMsgServerConnectionChanged(int status) {
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::green);
         ui->cmdLabel->setPalette(pe);
-    } else {
+    } else if (status == 3) {
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::black);
         ui->cmdLabel->setPalette(pe);
@@ -106,7 +106,7 @@ void MainWindow::onVideoServerConnectionChanged(int status) {
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::green);
         ui->videoLabel->setPalette(pe);
-    } else {
+    } else if (status == 3) {
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::black);
         ui->videoLabel->setPalette(pe);
@@ -121,8 +121,9 @@ void MainWindow::onMsgReceived(const std::string &cmd) {
         auto videoServer = ui->videoAddr->text().toStdString();
         threadPool->push([this, videoServer](int id) {
             spdlog::info("start to connect video server");
-            Client::getVideoClient().init(videoServer, "video server", [this](const evpp::TCPConnPtr &connPtr) {
-                onVideoServerConnectionChanged(connPtr->status());
+            Client::getVideoClient().init(videoServer, "video server");
+            Client::getVideoClient().setOnConnectionChangedCallback([this](const int status) {
+                onVideoServerConnectionChanged(status);
             });
             Client::getVideoClient().setOnNewMsgReceivedCallback([this](const char *data, size_t size) {
                 vector<unsigned char> frameData(data, data + size);
