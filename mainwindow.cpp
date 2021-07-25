@@ -133,7 +133,7 @@ void MainWindow::onMsgReceived(const std::string &cmd) {
 }
 
 void MainWindow::onVideoFrameReceived(const std::vector<unsigned char> &frameData) {
-    cv::Mat matFrame = cv::imdecode(frameData, cv::IMREAD_COLOR);
+    cv::Mat matFrame = cv::imdecode(frameData, cv::IMREAD_UNCHANGED);
     if (matFrame.empty() || matFrame.rows == 0) {
         spdlog::warn("Invalid frame:{}, {}, {}, ignored", frameData.size(), matFrame.rows, matFrame.cols);
         matFrame.release();
@@ -144,7 +144,7 @@ void MainWindow::onVideoFrameReceived(const std::vector<unsigned char> &frameDat
     QImage img = QImage((const uchar *) (matFrame.data),  //(const unsigned char*)
                         matFrame.cols, matFrame.rows,
                         matFrame.cols * matFrame.channels(),   //new add
-                        QImage::Format_RGB888);
+                        QImage::Format_BGR888);
     ui->Frame->setPixmap(QPixmap::fromImage(img));
     ui->Frame->resize(ui->Frame->pixmap()->size());
     ui->Frame->show();
