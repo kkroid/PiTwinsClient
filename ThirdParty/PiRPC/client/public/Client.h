@@ -10,16 +10,16 @@
 #include <buffer.h>
 #include <event_loop.h>
 #include <tcp_conn.h>
+#include "MessageReceiver.h"
 
-#define DEFAULT_ADDR_CMD_SERVER "127.0.0.1:15556"
-#define DEFAULT_ADDR_VIDEO_SERVER "127.0.0.1:15555"
 
 class Client {
 private:
-    std::string addr = DEFAULT_ADDR_CMD_SERVER;
+    std::string addr = "";
     std::string name = "Client";
     evpp::TCPClient *client = nullptr;
     evpp::EventLoop *loop = nullptr;
+    MessageReceiver::MessageCallback msgCallback = nullptr;
 public:
 
     Client() = default;
@@ -46,12 +46,11 @@ public:
     // 拒绝拷贝赋值
     Client &operator=(const Client &rhs) = delete;
 
-    void init(std::string address, std::string clientName, const evpp::ConnectionCallback &ccb = nullptr,
-              const evpp::MessageCallback &mcb = nullptr);
+    void init(std::string address, std::string clientName, const evpp::ConnectionCallback &ccb = nullptr);
 
     void setConnectionCallback(const evpp::ConnectionCallback &ccb = nullptr);
 
-    void setMessageCallback(const evpp::MessageCallback &mcb = nullptr);
+    void setMessageCallback(MessageReceiver::MessageCallback mcb);
 
     void connect();
 
@@ -67,6 +66,7 @@ public:
     }
 
     void Send(const std::string& msg) {
+        // spdlog::info("send msg:{}", msg);
         Send(msg.data(), msg.length());
     }
 };

@@ -30,6 +30,8 @@ include_directories(ThirdParty/PiRPC/server/public)
 include_directories(ThirdParty/PiRPC/client/public)
 include_directories(Public)
 
+
+add_definitions(-DPiRPC_TYPE=1)
 add_subdirectory(ThirdParty/PiRPC)
 
 add_executable(PiTwinsClient

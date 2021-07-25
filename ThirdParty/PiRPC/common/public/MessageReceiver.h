@@ -10,19 +10,26 @@
 #include <tcp_conn.h>
 #include "spdlog/spdlog.h"
 #include "json.hpp"
+
+#if PiRPC_TYPE == 0
+
 #include "CameraMsgProcessor.h"
 #include "ServoMsgProcessor.h"
 
+#elif PiRPC_TYPE == 1
+
+#include "MessageProcessor.h"
+
+#endif
+
 using namespace evpp;
 
-#define MSG_TYPE_CAMERA 0
-#define MSG_TYPE_SERVO 1
-#define MSG_TYPE_DC_MOTOR 2
 
 class MessageReceiver {
 private:
-    std::map<int, MessageProcessor*> processorMapping;
+    std::map<int, MessageProcessor *> processorMapping;
 public:
+    typedef std::function<void(const char *, size_t)> MessageCallback;
 
     MessageReceiver() = default;
 
@@ -43,28 +50,36 @@ public:
 
     void onNewMsgReceived(const TCPConnPtr &tcpConnPtr, Buffer *buffer) {
         std::string msg = buffer->ToString();
+        buffer->Reset();
         try {
             nlohmann::json obj = nlohmann::json::parse(msg);
-            MessageProcessor* processor = getOrCreateProcessor(obj["type"]);
+            MessageProcessor *processor = getOrCreateProcessor(obj["type"]);
             processor->process(obj);
-        } catch (nlohmann::detail::exception& e) {
+        } catch (nlohmann::detail::exception &e) {
             MessageProcessor::processUnknownMessage(buffer, e.what());
         }
     }
 
-    MessageProcessor* getOrCreateProcessor(int type) {
-        MessageProcessor* processor = processorMapping[type];
+    MessageProcessor *getOrCreateProcessor(int type) {
+        MessageProcessor *processor = processorMapping[type];
         if (nullptr == processor) {
             switch (type) {
-                case MSG_TYPE_CAMERA:
+#if PiRPC_TYPE == 0
+                case TYPE_CAMERA_CTRL:
                     processor = new CameraMsgProcessor();
+                    processorMapping[type] = processor;
                     break;
-                case MSG_TYPE_SERVO:
+                case TYPE_SERVO_CTRL:
                     processor = new ServoMsgProcessor();
+                    processorMapping[type] = processor;
                     break;
-                case MSG_TYPE_DC_MOTOR:
+                case TYPE_MOTOR_CTRL:
                     spdlog::info("No impl yet:{}", type);
+                    // processor = new ServoMsgProcessor();
                     break;
+#elif PiRPC_TYPE == 1
+
+#endif
                 default:
                     spdlog::warn("No such msg processor:{}", type);
                     break;

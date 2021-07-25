@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "Snowflak.h"
 #include "Client.h"
 #include "utils.h"
 #include <opencv2/opencv.hpp>
@@ -32,18 +31,52 @@ void MainWindow::on_connectBtn_clicked() {
     spdlog::info("Connect button clicked, msgServer = {}", msgServer);
 
     threadPool->push([this, msgServer](int id) {
-        spdlog::info("start to launch cmd server");
-        Client::getMsgClient().init(msgServer, "cmd server", [this](const evpp::TCPConnPtr &connPtr) {
+        spdlog::info("start to connect msg server");
+        Client::getMsgClient().init(msgServer, "msg server", [this](const evpp::TCPConnPtr &connPtr) {
             onMsgServerConnectionChanged(connPtr->status());
-        }, [this](const evpp::TCPConnPtr &connPtr, evpp::Buffer *buffer) {
-            onMsgReceived(buffer->ToString());
+        });
+        Client::getMsgClient().setMessageCallback([this](const char *data, size_t size) {
+            onMsgReceived(std::string(data, size));
         });
         Client::getMsgClient().connect();
     });
 }
 
+#define UP 16777235
+#define DOWN 16777237
+#define LEFT 16777234
+#define RIGHT 16777236
+#define W 87
+#define S 83
+#define A 65
+#define D 68
+
 void MainWindow::keyPressEvent(QKeyEvent *keyEvent) {
-    spdlog::info("{} key pressed", keyEvent->text().toUtf8());
+    switch (keyEvent->key()) {
+        case UP:
+            Client::getMsgClient().Send(MessageGenerator::genServo(2, -1));
+            break;
+        case DOWN:
+            Client::getMsgClient().Send(MessageGenerator::genServo(2, 1));
+            break;
+        case LEFT:
+            Client::getMsgClient().Send(MessageGenerator::genServo(1, 1));
+            break;
+        case RIGHT:
+            Client::getMsgClient().Send(MessageGenerator::genServo(1, -1));
+            break;
+        case W:
+            break;
+        case S:
+            break;
+        case A:
+            break;
+        case D:
+            break;
+        default:
+            break;
+    }
+    spdlog::info("{} = [{}] key pressed", keyEvent->text().toStdString(), keyEvent->key());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -54,7 +87,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 void MainWindow::onMsgServerConnectionChanged(int status) {
     if (status == 2) {
-        std::string msg = MessageGenerator::gen(0, MessageGenerator::format(R"({"cmd":%d,"param":%d})", 0, 0));
+        // request open camera
+        std::string msg = MessageGenerator::genCamera(0, 0);
         Client::getMsgClient().Send(msg);
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::green);
@@ -79,20 +113,19 @@ void MainWindow::onVideoServerConnectionChanged(int status) {
 }
 
 void MainWindow::onMsgReceived(const std::string &cmd) {
-    spdlog::info("Client Received A Message:[{}]", cmd);
+    spdlog::info("Client Received A Message:{}", cmd);
     nlohmann::json obj = nlohmann::json::parse(cmd);
     int type = obj["type"];
-    if (type == TYPE_CAMERA_OPENED) {
+    if (type == TYPE_CAMERA_CTRL) {
         auto videoServer = ui->videoAddr->text().toStdString();
         threadPool->push([this, videoServer](int id) {
-            spdlog::info("start to launch video server");
+            spdlog::info("start to connect video server");
             Client::getVideoClient().init(videoServer, "video server", [this](const evpp::TCPConnPtr &connPtr) {
                 onVideoServerConnectionChanged(connPtr->status());
-            }, [this](const evpp::TCPConnPtr &connPtr, evpp::Buffer *buffer) {
-                auto *ucharData = buffer->data();
-                vector<unsigned char> data(ucharData, ucharData + buffer->size());
-                onVideoFrameReceived(data);
-                buffer->Reset();
+            });
+            Client::getVideoClient().setMessageCallback([this](const char *data, size_t size) {
+                vector<unsigned char> frameData(data, data + size);
+                onVideoFrameReceived(frameData);
             });
             Client::getVideoClient().connect();
         });
@@ -100,7 +133,7 @@ void MainWindow::onMsgReceived(const std::string &cmd) {
 }
 
 void MainWindow::onVideoFrameReceived(const std::vector<unsigned char> &frameData) {
-    cv::Mat matFrame = cv::imdecode(frameData, cv::IMREAD_UNCHANGED);
+    cv::Mat matFrame = cv::imdecode(frameData, cv::IMREAD_COLOR);
     if (matFrame.empty() || matFrame.rows == 0) {
         spdlog::warn("Invalid frame:{}, {}, {}, ignored", frameData.size(), matFrame.rows, matFrame.cols);
         matFrame.release();

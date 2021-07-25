@@ -9,12 +9,13 @@
 
 #include "Snowflak.h"
 
-#define TYPE_OPEN_CAMERA 0
-#define TYPE_CLOSE_CAMERA 1
-#define TYPE_CAMERA_OPENED 2
+#define TYPE_CAMERA_CTRL 1
+#define TYPE_SERVO_CTRL 2
+#define TYPE_MOTOR_CTRL 3
 
 #define BASE_MSG_FORMAT R"({"tid":%llu,"type":%d,"payload":%s})"
-
+#define BASE_SERVO_MOTOR_MSG_FORMAT R"({"servo":%d,"delta":%d})"
+#define BASE_CAMERA_MSG_FORMAT R"({"cmd":%d,"param":%d})"
 
 class MessageGenerator {
 
@@ -28,9 +29,21 @@ public:
         return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
     }
 
-    static std::string gen(int type, const std::string& payload) {
+    static std::string gen(int type, const std::string &payload) {
         static Snowflake snowflake;
         return format(BASE_MSG_FORMAT, snowflake.nextId(), type, payload.c_str());
+    }
+
+    static std::string genCamera(int cmd, int param) {
+        return gen(TYPE_CAMERA_CTRL, format(BASE_CAMERA_MSG_FORMAT, cmd, param));
+    }
+
+    static std::string genServo(int servo, int delta) {
+        return gen(TYPE_SERVO_CTRL, format(BASE_SERVO_MOTOR_MSG_FORMAT, servo, delta));
+    }
+
+    static std::string genMoto(int key) {
+        return gen(TYPE_MOTOR_CTRL, format(BASE_SERVO_MOTOR_MSG_FORMAT, key));
     }
 };
 
