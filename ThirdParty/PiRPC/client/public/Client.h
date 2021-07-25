@@ -10,7 +10,7 @@
 #include <buffer.h>
 #include <event_loop.h>
 #include <tcp_conn.h>
-
+#include "Stream2Package.h"
 #include <utility>
 #include "PiRPCCallbacks.h"
 
@@ -70,7 +70,10 @@ namespace PiRPC {
 
         void Send(const void *d, size_t dlen) {
             if (client && client->conn()->IsConnected()) {
-                client->conn()->Send(d, dlen);
+                evpp::Buffer buffer;
+                buffer.AppendInt32(dlen);
+                buffer.Append(d, dlen);
+                client->conn()->Send(&buffer);
             }
         }
 
