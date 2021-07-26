@@ -17,11 +17,11 @@ namespace PiRPC {
             int32_t currentDataSize = buffer->size() - headerSize;
             int32_t delta = realDataSize - currentDataSize;
             if (delta > 0) {
-                spdlog::info("数据不够,realDataSize:{}, currentDataSize:{}, peek:{}, delta:{}", realDataSize,
+                spdlog::trace("数据不够,realDataSize:{}, currentDataSize:{}, peek:{}, delta:{}", realDataSize,
                              currentDataSize, buffer->PeekInt32(), realDataSize - currentDataSize);
                 return;
             } else if (delta == 0) {
-                spdlog::info("数据充足,realDataSize:{}, currentDataSize:{}, headerSize:{}", realDataSize, currentDataSize,
+                spdlog::trace("数据充足,realDataSize:{}, currentDataSize:{}, headerSize:{}", realDataSize, currentDataSize,
                              headerSize);
                 buffer->Skip(headerSize);
                 if (onNewMsgReceived) {
@@ -33,7 +33,7 @@ namespace PiRPC {
                 int count = 0;
                 while (true) {
                     if (realDataSize - currentDataSize < 0) {
-                        spdlog::info("数据多了{}，拆包，发送处理, realDataSize:{}, currentDataSize:{}, headerSize:{}", count++,
+                        spdlog::trace("数据多了{}，拆包，发送处理, realDataSize:{}, currentDataSize:{}, headerSize:{}", count++,
                                      realDataSize, currentDataSize, headerSize);
                         evpp::Buffer data;
                         buffer->Skip(headerSize);
