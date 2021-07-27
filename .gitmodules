@@ -1,0 +1,3 @@
+[submodule "ThirdParty/PiRPC"]
+	path = ThirdParty/PiRPC
+	url = https://github.com/kkroid/PiRPC.git
