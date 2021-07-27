@@ -12,9 +12,10 @@
 #include <event_loop.h>
 
 #include <utility>
+#include <PiRPCCallbacks.h>
 #include "slice.h"
 #include "buffer.h"
-#include "MessageReceiver.h"
+#include "Stream2Package.h"
 
 #define ADDR_MSG_SERVER "0.0.0.0:5556"
 #define ADDR_VIDEO_SERVER "0.0.0.0:5555"
@@ -32,6 +33,9 @@ namespace PiRPC {
         evpp::TCPServer *server = nullptr;
         evpp::EventLoop *loop = nullptr;
         std::shared_ptr<evpp::TCPConn> tcpConnPtr = nullptr;
+
+        PiRPC::OnNewMsgReceived _onNewMsgReceived = nullptr;
+        PiRPC::OnConnectionChanged _onConnectionChanged = nullptr;
     public:
 
         Server() = default;
@@ -61,13 +65,35 @@ namespace PiRPC {
             name = std::move(serverName);
             loop = new evpp::EventLoop();
             server = new evpp::TCPServer(loop, addr, name, threadNum);
-            setConnectionCallback(ccb);
-            setMessageCallback(mcb);
+
+            server->SetConnectionCallback([this, ccb](const evpp::TCPConnPtr &connPtr) {
+                if (connPtr->IsConnected()) {
+                    spdlog::info("[{}]:Client {} Connected", name, connPtr->remote_addr());
+                    // TODO 这里是新连接覆盖旧连接，将来改成支持多连接
+                    tcpConnPtr = connPtr;
+                } else if (connPtr->IsDisconnected()) {
+                    spdlog::info("[{}]:Client {} Disconnected", name, connPtr->remote_addr());
+                    tcpConnPtr = nullptr;
+                }
+                if (_onConnectionChanged) {
+                    _onConnectionChanged(connPtr->status());
+                }
+            });
+
+            server->SetMessageCallback([this, mcb](const evpp::TCPConnPtr &connPtr, evpp::Buffer *buffer) {
+                if (_onNewMsgReceived) {
+                    Stream2Package::Do(_onNewMsgReceived, buffer);
+                }
+            });
         }
 
-        void setConnectionCallback(const evpp::ConnectionCallback &ccb);
+        void setOnConnectionChangedCallback(const PiRPC::OnConnectionChanged &onConnectionChanged) {
+            _onConnectionChanged = onConnectionChanged;
+        }
 
-        void setMessageCallback(const evpp::MessageCallback &mcb);
+        void setOnNewMsgReceivedCallback(const PiRPC::OnNewMsgReceived &onNewMsgReceived) {
+            _onNewMsgReceived = onNewMsgReceived;
+        }
 
         void run();
 
@@ -77,7 +103,7 @@ namespace PiRPC {
 
         void send(const void *data, size_t len) {
             if (tcpConnPtr) {
-                Buffer buffer;
+                evpp::Buffer buffer;
                 buffer.AppendInt32(len);
                 buffer.Append(data, len);
                 tcpConnPtr->Send(&buffer);

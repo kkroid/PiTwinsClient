@@ -30,7 +30,6 @@ namespace PiRPC {
 
     void Client::disconnect() {
         if (client) {
-            client->conn()->Close();
             client->Disconnect();
             loop->Stop();
         }

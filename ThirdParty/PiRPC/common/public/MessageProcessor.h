@@ -15,10 +15,8 @@ namespace PiRPC {
     public:
         virtual void process(nlohmann::json msg) = 0;
 
-        virtual void process(evpp::Buffer *buffer) = 0;
-
-        static void processUnknownMessage(evpp::Buffer *buffer, const std::string &error) {
-            spdlog::warn("processUnknownMessage error:{}, msg:{}", error, buffer->ToString());
+        static void processUnknownMessage(const std::string& msg, const std::string &error) {
+            spdlog::warn("processUnknownMessage error:{}, msg:{}", error, msg);
         }
     };
 }

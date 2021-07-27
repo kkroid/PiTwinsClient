@@ -20,10 +20,10 @@ find_package(Threads)
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-include_directories(ThirdParty/spdlog)
-include_directories(ThirdParty/cptl)
-include_directories(ThirdParty/json)
 include_directories(ThirdParty/OpenCV/include)
+include_directories(ThirdParty/PiRPC/spdlog)
+include_directories(ThirdParty/PiRPC/cptl)
+include_directories(ThirdParty/PiRPC/json)
 include_directories(ThirdParty/PiRPC/evpp/public)
 include_directories(ThirdParty/PiRPC/common/public)
 include_directories(ThirdParty/PiRPC/server/public)
