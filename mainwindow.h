@@ -5,7 +5,7 @@
 #include "ctpl_stl.h"
 #include <QKeyEvent>
 #include <QCloseEvent>
-#include "MessageGenerator.h"
+#include "MsgGen.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

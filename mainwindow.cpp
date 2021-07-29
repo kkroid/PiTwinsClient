@@ -3,6 +3,7 @@
 #include "Client.h"
 #include "utils.h"
 #include <opencv2/opencv.hpp>
+#include <Heartbeat.h>
 #include "json.hpp"
 
 using namespace std;
@@ -55,16 +56,16 @@ void MainWindow::on_connectBtn_clicked() {
 void MainWindow::keyPressEvent(QKeyEvent *keyEvent) {
     switch (keyEvent->key()) {
         case UP:
-            Client::getMsgClient().Send(MessageGenerator::genServo(2, -1));
+            Client::getMsgClient().Send(MsgGen::servo(2, -1));
             break;
         case DOWN:
-            Client::getMsgClient().Send(MessageGenerator::genServo(2, 1));
+            Client::getMsgClient().Send(MsgGen::servo(2, 1));
             break;
         case LEFT:
-            Client::getMsgClient().Send(MessageGenerator::genServo(1, 1));
+            Client::getMsgClient().Send(MsgGen::servo(1, 1));
             break;
         case RIGHT:
-            Client::getMsgClient().Send(MessageGenerator::genServo(1, -1));
+            Client::getMsgClient().Send(MsgGen::servo(1, -1));
             break;
         case W:
             break;
@@ -82,6 +83,7 @@ void MainWindow::keyPressEvent(QKeyEvent *keyEvent) {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     spdlog::info("window onClose called");
+    PiRPC::Heartbeat::getInstance().release();
     Client::getMsgClient().disconnect();
     Client::getVideoClient().disconnect();
 }
@@ -89,11 +91,12 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 void MainWindow::onMsgServerConnectionChanged(int status) {
     if (status == 2) {
         // request open camera
-        std::string msg = MessageGenerator::genCamera(0, 0);
+        std::string msg = MsgGen::camera(0, 0);
         Client::getMsgClient().Send(msg);
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::green);
         ui->cmdLabel->setPalette(pe);
+        PiRPC::Heartbeat::getInstance().init();
     } else if (status == 3) {
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::black);
