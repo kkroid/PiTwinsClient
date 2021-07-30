@@ -3,7 +3,6 @@
 #include "Client.h"
 #include "utils.h"
 #include <opencv2/opencv.hpp>
-#include <Heartbeat.h>
 #include "json.hpp"
 
 using namespace std;
@@ -42,7 +41,7 @@ void MainWindow::on_connectBtn_clicked() {
 
     threadPool->push([this, msgServer](int id) {
         spdlog::info("start to connect msg server");
-        Client::getMsgClient().init(msgServer, "msg server");
+        Client::getMsgClient().init(msgServer, "msg server", true);
         Client::getMsgClient().setOnConnectionChangedCallback([this](int status) {
             onMsgServerConnectionChanged(status);
         });
@@ -83,7 +82,6 @@ void MainWindow::keyPressEvent(QKeyEvent *keyEvent) {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     spdlog::info("window onClose called");
-    PiRPC::Heartbeat::getInstance().release();
     Client::getMsgClient().disconnect();
     Client::getVideoClient().disconnect();
 }
@@ -96,7 +94,6 @@ void MainWindow::onMsgServerConnectionChanged(int status) {
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::green);
         ui->cmdLabel->setPalette(pe);
-        PiRPC::Heartbeat::getInstance().init();
     } else if (status == 3) {
         QPalette pe;
         pe.setColor(QPalette::WindowText, Qt::black);
@@ -144,11 +141,11 @@ void MainWindow::onVideoFrameReceived(const std::vector<unsigned char> &frameDat
         matFrame.release();
         return;
     }
-    // spdlog::info("Valid frame:{}, {}, {}", frameData.size(), matFrame.rows, matFrame.cols);
+    spdlog::trace("Valid frame:{}, {}, {}", frameData.size(), matFrame.rows, matFrame.cols);
 
-    QImage img = QImage((const uchar *) (matFrame.data),  //(const unsigned char*)
+    QImage img = QImage((const uchar *) (matFrame.data),
                         matFrame.cols, matFrame.rows,
-                        matFrame.cols * matFrame.channels(),   //new add
+                        matFrame.cols * matFrame.channels(),
                         QImage::Format_BGR888);
     ui->Frame->setPixmap(QPixmap::fromImage(img));
     ui->Frame->resize(ui->Frame->pixmap()->size());
