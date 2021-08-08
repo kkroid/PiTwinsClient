@@ -41,7 +41,7 @@ void MainWindow::on_connectBtn_clicked() {
 
     threadPool->push([this, msgServer](int id) {
         spdlog::info("start to connect msg server");
-        Client::getMsgClient().init(msgServer, "msg server", true);
+        Client::getMsgClient().init(msgServer, "msg server");
         Client::getMsgClient().setOnConnectionChangedCallback([this](int status) {
             onMsgServerConnectionChanged(status);
         });
