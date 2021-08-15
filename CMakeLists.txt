@@ -4,6 +4,8 @@ project(PiTwinsClient LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+set(USE_PiRPC_CODE 0)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -16,17 +18,11 @@ set(Qt5_DIR /Users/willzhang/Qt5.14.2/5.14.2/clang_64/lib/cmake/Qt5)
 add_library(OpenCV SHARED IMPORTED)
 set_target_properties(OpenCV PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/ThirdParty/OpenCV/mac/libopencv_world.4.5.2.dylib)
 
-find_package(Threads)
-
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 include_directories(ThirdParty/OpenCV/include)
 include_directories(ThirdParty/PiRPC/include)
 include_directories(Public)
-
-
-add_definitions(-DPiRPC_TYPE=1)
-add_subdirectory(ThirdParty/PiRPC)
 
 add_executable(PiTwinsClient
         main.cpp
@@ -34,8 +30,32 @@ add_executable(PiTwinsClient
         mainwindow.ui
         )
 
-target_link_libraries(PiTwinsClient PRIVATE
-        Qt5::Widgets
-        OpenCV
-        PiRPC
-        )
+if (${USE_PiRPC_CODE})
+    add_subdirectory(ThirdParty/PiRPC)
+
+    target_link_libraries(PiTwinsClient PRIVATE
+            Qt5::Widgets
+            OpenCV
+            PiRPC
+            )
+else()
+    add_library(PiRPC SHARED IMPORTED)
+    add_library(evpp SHARED IMPORTED)
+    add_library(libevent SHARED IMPORTED)
+    set(PiRPC_DIR ${CMAKE_CURRENT_LIST_DIR}/ThirdParty/PiRPC)
+    IF (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set_target_properties(PiRPC PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/lib/pi/libPiRPC.so)
+        set_target_properties(evpp PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/evpp/lib/pi/libevpp.so)
+    ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set_target_properties(PiRPC PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/lib/macos/libPiRPC.dylib)
+        set_target_properties(evpp PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/evpp/lib/macos/libevpp.dylib)
+        set_target_properties(libevent PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/evpp/libevent/lib/macos/libevent-2.1.7.dylib)
+    ENDIF()
+    target_link_libraries(PiTwinsClient PRIVATE
+            Qt5::Widgets
+            OpenCV
+            PiRPC
+            evpp
+            libevent
+            )
+endif()
