@@ -21,11 +21,7 @@ find_package(Threads)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 include_directories(ThirdParty/OpenCV/include)
-include_directories(ThirdParty/PiRPC/spdlog)
-include_directories(ThirdParty/PiRPC/evpp/public)
-include_directories(ThirdParty/PiRPC/common/public)
-include_directories(ThirdParty/PiRPC/server/public)
-include_directories(ThirdParty/PiRPC/client/public)
+include_directories(ThirdParty/PiRPC/include)
 include_directories(Public)
 
 

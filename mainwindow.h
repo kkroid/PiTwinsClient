@@ -2,10 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "ctpl_stl.h"
+#include "commom/ctpl_stl.h"
 #include <QKeyEvent>
 #include <QCloseEvent>
-#include "MsgGen.h"
+#include "commom/MsgGen.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
