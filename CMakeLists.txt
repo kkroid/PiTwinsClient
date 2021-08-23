@@ -13,7 +13,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 用于在纯cmake下编译本项目时能够找到Qt相关的库
-set(Qt5_DIR /Users/willzhang/Qt5.14.2/5.14.2/clang_64/lib/cmake/Qt5)
+#set(Qt5_DIR /Users/willzhang/Qt5.14.2/5.14.2/clang_64/lib/cmake/Qt5)
+set(Qt5_DIR /Users/willzhang/Qt5/5.15.2/clang_64/lib/cmake/Qt5)
 
 add_library(OpenCV SHARED IMPORTED)
 set_target_properties(OpenCV PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/ThirdParty/OpenCV/mac/libopencv_world.4.5.2.dylib)
@@ -32,12 +33,7 @@ add_executable(PiTwinsClient
 
 if (${USE_PiRPC_CODE})
     add_subdirectory(ThirdParty/PiRPC)
-
-    target_link_libraries(PiTwinsClient PRIVATE
-            Qt5::Widgets
-            OpenCV
-            PiRPC
-            )
+    set(PiRPC PiRPC)
 else()
     add_library(PiRPC SHARED IMPORTED)
     add_library(evpp SHARED IMPORTED)
@@ -46,16 +42,15 @@ else()
     IF (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         set_target_properties(PiRPC PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/lib/pi/libPiRPC.so)
         set_target_properties(evpp PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/evpp/lib/pi/libevpp.so)
+        set_target_properties(libevent PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/evpp/libevent/lib/pi/libevent-2.1.7.so)
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set_target_properties(PiRPC PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/lib/macos/libPiRPC.dylib)
         set_target_properties(evpp PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/evpp/lib/macos/libevpp.dylib)
         set_target_properties(libevent PROPERTIES IMPORTED_LOCATION ${PiRPC_DIR}/evpp/libevent/lib/macos/libevent-2.1.7.dylib)
     ENDIF()
-    target_link_libraries(PiTwinsClient PRIVATE
-            Qt5::Widgets
-            OpenCV
-            PiRPC
-            evpp
-            libevent
-            )
+    set(PiRPC PiRPC evpp libevent)
 endif()
+target_link_libraries(PiTwinsClient PRIVATE
+        Qt5::Widgets
+        OpenCV
+        ${PiRPC})
