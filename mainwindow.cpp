@@ -129,7 +129,7 @@ void MainWindow::onMsgReceived(const std::string &cmd) {
                 vector<unsigned char> frameData(data, data + size);
                 onVideoFrameReceived(frameData);
             });
-            Client::getVideoClient().connect();
+            Client::getVideoClient().connect(false);
         });
     }
 }
